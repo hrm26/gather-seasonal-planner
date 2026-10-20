@@ -130,6 +130,13 @@ textarea { min-height:84px; resize:vertical; }
 .modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:18px; }
 @media(max-width:1000px) { .event-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .workspace { grid-template-columns:1fr; } .sidebar { position:static; } .nav { grid-template-columns:repeat(3,minmax(0,1fr)); } .nav button { justify-content:center; text-align:center; padding:10px 6px; } .nav .emoji { width:auto; } }
 @media(max-width:650px) { .topbar { align-items:flex-start; } .top-actions .pill { display:none; } main { padding:16px; } .event-grid,.two-col,.three-col { grid-template-columns:1fr; } .event-card { min-height:185px; } .event-card .art { height:100px; } .content-head { display:block; } .view-toggle { width:max-content; margin-top:14px; } .bigday { align-items:flex-start; flex-direction:column; } .nav { grid-template-columns:repeat(2,minmax(0,1fr)); } .panel { padding:16px; } .day { min-height:63px; padding:4px; } .day .event-dot { font-size:8px; } .calendar { gap:3px; } }
+.art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: inherit;
+}
 </style>
 </head>
 <body>
@@ -153,13 +160,54 @@ textarea { min-height:84px; resize:vertical; }
   <h1>Every season<br>has a story.</h1>
   <p class="intro muted">Choose what you're planning. Gather ideas, recipes, people and little details in one colourful home — from the first spark of inspiration to <em>The Big Day!</em></p>
   <div class="event-grid">
-    <button class="event-card" data-event="Autumn gatherings" style="--card-bg:#f3e1ce;--art-bg:#e5bd88"><div class="art"></div><div class="copy"><strong>Autumn gatherings</strong><small>Cosy dinners, harvest & Halloween</small></div></button>
-    <button class="event-card" data-event="Christmas" style="--card-bg:#e4ebdd;--art-bg:#b9c9ae"><div class="art">🎄 ✨</div><div class="copy"><strong>Christmas</strong><small>From first lights to festive day</small></div></button>
-    <button class="event-card" data-event="Spring & Easter" style="--card-bg:#f3e5e9;--art-bg:#e8c6d0"><div class="art">🌷 🐣</div><div class="copy"><strong>Spring & Easter</strong><small>Fresh starts and bright tables</small></div></button>
-    <button class="event-card" data-event="Summer season" style="--card-bg:#f5e8bd;--art-bg:#efce70"><div class="art">🍋 🌼</div><div class="copy"><strong>Summer season</strong><small>Long days, picnics & parties</small></div></button>
-    <button class="event-card" data-event="Halloween" style="--card-bg:#eee0d7;--art-bg:#d7a27c"><div class="art">🕯️ 👻</div><div class="copy"><strong>Halloween</strong><small>Spooky ideas and sweet treats</small></div></button>
-    <button class="event-card" data-event="A birthday season" style="--card-bg:#e6dff2;--art-bg:#cbbbe5"><div class="art">🎂 🎈</div><div class="copy"><strong>Birthday season</strong><small>One person or a whole month</small></div></button>
-    <button class="event-card" data-event="A wedding season" style="--card-bg:#f2e6df;--art-bg:#e5c7b8"><div class="art">💐 🥂</div><div class="copy"><strong>Wedding season</strong><small>Plan the lead-up together</small></div></button>
+    <button class="event-card" data-event="Autumn gatherings" style="--card-bg:#f3e1ce;--art-bg:#e5bd88">
+  <div class="art">
+    <img src="https://cdn.pixabay.com/photo/2021/10/21/12/58/leaves-6729056_640.jpg" alt="Falling autumn leaves">
+  </div>
+  <div class="copy">
+    <strong>Autumn gatherings</strong>
+    <small>Cosy dinners, harvest & Halloween</small>
+  </div>
+</button>
+ <button class="event-card" data-event="Christmas" style="--card-bg:#e4ebdd;--art-bg:#b9c9ae>
+  <div class="art">
+    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTUkYP9sfPInLHtuoBH1Ha-FYsWD4cQCb1c5ajBPeBaSUO4uhu0WkMXJAA&s=10" alt="Rabbits carrying christmas tree">
+  </div>
+  <div class="copy">
+    <strong>Christmas</strong>
+    <small>From first lights to festive day</small>
+  </div>
+</button>
+        <button class="event-card" data-event="Spring and Easter" style="--card-bg:#f3e1ce;--art-bg:#e5bd88">
+  <div class="art">
+    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTCT9PRm1vNAwrbzeoY0_AtEcf_0KAyapoFYxmbpK0quQ&s=10" alt="swirling fields">
+  </div>
+  <div class="copy">
+    <strong>Spring</strong>
+    <small>Fresh starts and bright tables</small>
+  </div>
+</button>
+   <button class="event-card" data-event="Summer Season" style="--card-bg:#f5e8bd;--art-bg:#efce70">
+  <div class="art">
+    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTvQ5OFG3MkoFBqaq5n27gvnehcMcavf3Pjdv1nYGNhbLYvJ-2xz1SxEnb9&s=10" alt="lemon on stripy background">
+  </div>
+  <div class="copy">
+    <strong>Summer</strong>
+    <small>Long days, picnics & parties</small>
+  </div>
+</button>
+        <button class="event-card" data-event="Halloween" style="--card-bg:#eee0d7;--art-bg:#d7a27c"><div class="art">
+    <img src="https://i.pinimg.com/236x/a4/06/d1/a406d170a31e81f8ac8c495c3499edcc.jpg" alt="mice inside pumpkin">
+  </div>
+<div class="copy"><strong>Halloween</strong><small>Spooky ideas and sweet treats</small></div></button>
+    <button class="event-card" data-event="A birthday season" style="--card-bg:#e6dff2;--art-bg:#cbbbe5"><div class="art">
+    <img src="https://i.pinimg.com/736x/6e/8b/00/6e8b00578532743935f885cbeff77118.jpg" alt="cake and candles">
+  </div>
+<div class="copy"><strong>Birthday season</strong><small>One person or a whole month</small></div></button>
+    <button class="event-card" data-event="A wedding season" style="--card-bg:#f2e6df;--art-bg:#e5c7b8"><div class="art">
+    <img src="https://www.shutterstock.com/image-vector/vintage-wedding-stickers-cartoon-doodle-260nw-2707215745.jpg" alt="wedding icons">
+  </div>
+<div class="copy"><strong>Wedding season</strong><small>Plan the lead-up together</small></div></button>
     <button class="event-card custom" id="customEvent"><div><span class="plus">＋</span><strong style="font-family:var(--site-font-heading);font-size:24px">Create your own</strong><small class="muted" style="display:block;margin-top:6px">Name any season or occasion</small></div></button>
   </div>
   <div class="panel" style="max-width:780px"><div class="panel-head"><div><h3>Seasonal inspiration, to get you started</h3><p class="muted">A few prompts to turn a blank page into a plan.</p></div><span style="font-size:27px">✷</span></div><div class="three-col"><div><span class="chip">LOOK & FEEL</span><p style="margin:10px 0 0;font-size:13px">What colours, textures and little rituals feel like this season?</p></div><div><span class="chip">GATHER</span><p style="margin:10px 0 0;font-size:13px">Who would you love to bring together, and what would make it special?</p></div><div><span class="chip">MAKE & EAT</span><p style="margin:10px 0 0;font-size:13px">What could you cook, bake, make or collect along the way?</p></div></div></div>
