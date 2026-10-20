@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Season & Gather — seasonal planner</title>
+<style>
+:root {
+  --site-primary: #d94f35;
+  --site-on-primary: #ffffff;
+  --site-secondary: #e9bd54;
+  --site-on-secondary: #38251c;
+  --site-background: #fff8ee;
+  --site-on-background: #302821;
+  --site-font-body: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --site-font-heading: Georgia, "Times New Roman", serif;
+  --site-heading-scale: 1;
+  --site-spacing-scale: 1;
+  --site-radius-scale: 1;
+  --site-decoration-opacity: 1;
+  color-scheme: light dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: var(--site-font-body); color: var(--site-on-background); background: light-dark(#fff8ee,#191714); }
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+#app { min-height: 100vh; width: 100%; border-radius: 0; background-color: var(--site-background); color: var(--site-on-background); transition: background .2s, color .2s; position: relative; overflow: hidden; }
+#app::before { content:""; position:fixed; inset:0; pointer-events:none; z-index:0; opacity:var(--bg-opacity,0); background-image:var(--planner-bg,none); background-size:cover; background-position:center; filter:blur(var(--bg-blur,0px)); transform:scale(1.03); }
+#app::after { content:""; position:fixed; inset:0; z-index:0; pointer-events:none; background:var(--bg-wash,transparent); }
+.shell { position:relative; z-index:1; }
+.topbar { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:18px clamp(16px,4vw,48px); border-bottom:1px solid color-mix(in srgb,var(--site-on-background) 14%,transparent); background:color-mix(in srgb,var(--site-background) 90%,transparent); backdrop-filter:blur(18px); }
+.brand { display:flex; align-items:center; gap:10px; font-weight:800; letter-spacing:-.04em; font-size:18px; }
+.brandmark { display:grid; place-items:center; width:36px; height:36px; border-radius:13px; background:var(--site-primary); color:var(--site-on-primary); font-size:20px; }
+.top-actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.pill, .btn { border:1px solid color-mix(in srgb,var(--site-on-background) 18%,transparent); border-radius:999px; padding:9px 14px; background:color-mix(in srgb,var(--site-background) 88%,white); color:var(--site-on-background); font-size:13px; font-weight:650; }
+.btn.primary { background:var(--site-primary); color:var(--site-on-primary); border-color:var(--site-primary); }
+.btn.soft { background:color-mix(in srgb,var(--site-secondary) 30%,var(--site-background)); }
+.btn:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline:3px solid color-mix(in srgb,var(--site-primary) 55%,transparent); outline-offset:2px; }
+main { max-width:1420px; margin:0 auto; padding:clamp(18px,3vw,38px); }
+.eyebrow { text-transform:uppercase; letter-spacing:.14em; font-size:11px; font-weight:800; color:var(--site-primary); }
+h1,h2,h3,p { margin-top:0; }
+h1,h2,h3 { font-family:var(--site-font-heading); letter-spacing:-.04em; }
+h1 { font-size:clamp(36px,6vw,68px); line-height:.98; margin:12px 0 18px; font-weight:500; }
+h2 { font-size:calc(27px * var(--site-heading-scale)); margin-bottom:8px; }
+h3 { font-size:calc(20px * var(--site-heading-scale)); margin-bottom:8px; }
+.muted { color:color-mix(in srgb,var(--site-on-background) 65%,transparent); }
+.intro { max-width:740px; font-size:16px; line-height:1.65; }
+.event-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin:28px 0; }
+.event-card { border:1px solid color-mix(in srgb,var(--site-on-background) 13%,transparent); border-radius:24px; overflow:hidden; min-height:215px; position:relative; padding:0; text-align:left; color:var(--site-on-background); background:var(--card-bg,#f5dfc8); transition:transform .2s,border-color .2s; }
+.event-card:hover { transform:translateY(-3px); border-color:var(--site-primary); }
+.event-card .art { height:132px; display:grid; place-items:center; font-size:62px; background:var(--art-bg,#e8bd7e); }
+.event-card .copy { padding:14px 16px; }
+.event-card strong { display:block; font-family:var(--site-font-heading); font-size:23px; font-weight:500; }
+.event-card small { display:block; margin-top:4px; opacity:.72; }
+.event-card.custom { display:flex; align-items:center; justify-content:center; border:1px dashed color-mix(in srgb,var(--site-on-background) 35%,transparent); background:transparent; text-align:center; padding:20px; }
+.event-card.custom .plus { font-size:35px; display:block; margin-bottom:12px; color:var(--site-primary); }
+.workspace { display:grid; grid-template-columns:245px minmax(0,1fr); gap:24px; align-items:start; }
+.sidebar { border:1px solid color-mix(in srgb,var(--site-on-background) 13%,transparent); border-radius:24px; padding:14px; background:color-mix(in srgb,var(--site-background) 92%,white); position:sticky; top:12px; }
+.event-switch { width:100%; text-align:left; margin-bottom:14px; border:0; background:color-mix(in srgb,var(--site-secondary) 27%,transparent); border-radius:15px; padding:13px; color:inherit; }
+.event-switch b { display:block; font-family:var(--site-font-heading); font-size:20px; }
+.event-switch small { display:block; margin-top:3px; }
+.nav { display:grid; gap:4px; }
+.nav button { border:0; text-align:left; padding:11px 12px; border-radius:12px; background:transparent; color:inherit; display:flex; align-items:center; gap:10px; font-weight:650; font-size:13px; }
+.nav button.active { background:var(--site-primary); color:var(--site-on-primary); }
+.nav .emoji { width:22px; text-align:center; font-size:16px; }
+.content-head { display:flex; justify-content:space-between; align-items:flex-start; gap:18px; margin-bottom:20px; }
+.content-head h2 { font-size:clamp(30px,4vw,42px); margin:6px 0; }
+.content-head p { margin-bottom:0; }
+.view-toggle { display:flex; gap:4px; padding:4px; border:1px solid color-mix(in srgb,var(--site-on-background) 15%,transparent); border-radius:999px; flex-shrink:0; }
+.view-toggle button { border:0; border-radius:999px; padding:8px 11px; background:transparent; color:inherit; font-size:12px; }
+.view-toggle button.active { background:var(--site-on-background); color:var(--site-background); }
+.panel { border:1px solid color-mix(in srgb,var(--site-on-background) 13%,transparent); border-radius:24px; padding:22px; background:color-mix(in srgb,var(--site-background) 94%,white); margin-bottom:18px; box-shadow:0 8px 30px rgba(58,37,20,.035); }
+.panel-head { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; margin-bottom:16px; }
+.panel-head p { font-size:13px; margin:4px 0 0; }
+.bigday { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:22px 24px; border-radius:22px; background:var(--site-primary); color:var(--site-on-primary); margin-bottom:18px; }
+.bigday h3 { font-size:28px; margin:5px 0; }
+.bigday input { color:var(--site-on-background); background:#fff9ef; }
+.field { display:grid; gap:6px; font-size:12px; font-weight:750; }
+input, select, textarea { width:100%; border:1px solid color-mix(in srgb,var(--site-on-background) 20%,transparent); border-radius:12px; padding:11px 12px; color:var(--site-on-background); background:color-mix(in srgb,var(--site-background) 96%,white); }
+textarea { min-height:84px; resize:vertical; }
+.form-row { display:flex; gap:10px; align-items:end; flex-wrap:wrap; }
+.form-row .field { flex:1; min-width:130px; }
+.two-col { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+.three-col { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+.stat { border-radius:18px; padding:17px; background:color-mix(in srgb,var(--site-secondary) 25%,var(--site-background)); }
+.stat small { display:block; opacity:.7; font-size:11px; font-weight:750; text-transform:uppercase; letter-spacing:.08em; }
+.stat strong { display:block; font-size:26px; margin-top:8px; font-family:var(--site-font-heading); font-weight:500; }
+.list { display:grid; gap:9px; }
+.list-item { display:flex; align-items:center; gap:10px; padding:12px 13px; border:1px solid color-mix(in srgb,var(--site-on-background) 12%,transparent); border-radius:14px; }
+.list-item input[type=checkbox] { width:17px; height:17px; accent-color:var(--site-primary); flex:0 0 auto; }
+.list-item .item-text { flex:1; }
+.list-item .item-text small { display:block; opacity:.65; margin-top:3px; font-size:11px; }
+.list-item.done .item-text { text-decoration:line-through; opacity:.55; }
+.remove { border:0; background:transparent; color:var(--site-primary); font-size:18px; padding:3px 6px; }
+.chips { display:flex; flex-wrap:wrap; gap:7px; margin:10px 0 0; }
+.chip { padding:6px 10px; border-radius:999px; background:color-mix(in srgb,var(--site-secondary) 28%,transparent); font-size:11px; font-weight:700; }
+.calendar { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:5px; }
+.dayname { text-align:center; font-size:10px; font-weight:800; padding:8px 0; opacity:.6; text-transform:uppercase; }
+.day { min-height:86px; border:1px solid color-mix(in srgb,var(--site-on-background) 12%,transparent); border-radius:12px; padding:7px; font-size:12px; background:color-mix(in srgb,var(--site-background) 90%,white); }
+.day.blank { border-color:transparent; background:transparent; }
+.day .num { font-weight:800; }
+.day .event-dot { margin-top:5px; padding:4px 5px; border-radius:6px; background:color-mix(in srgb,var(--site-primary) 20%,transparent); font-size:9px; line-height:1.2; overflow-wrap:anywhere; }
+.recipe-card { display:grid; grid-template-columns:90px minmax(0,1fr); gap:14px; align-items:center; padding:12px; border:1px solid color-mix(in srgb,var(--site-on-background) 13%,transparent); border-radius:16px; margin-bottom:9px; }
+.recipe-art { min-height:82px; border-radius:12px; display:grid; place-items:center; background:color-mix(in srgb,var(--site-secondary) 35%,transparent); font-size:34px; }
+.recipe-card p { margin:4px 0; font-size:12px; }
+.moodboard { position:relative; min-height:430px; border-radius:22px; overflow:hidden; background-color:#eee0ce; background-image:radial-gradient(#a47b57 0.8px, transparent .8px); background-size:15px 15px; padding:20px; }
+.mood-piece { position:absolute; border:5px solid #fffdf6; box-shadow:0 8px 20px #5d40251f; background:#fffdf6; padding:7px; width:160px; transform:rotate(var(--rot,-3deg)); }
+.mood-piece .photo { height:100px; display:grid; place-items:center; font-size:43px; background:var(--tile,#c66a45); }
+.mood-piece small { display:block; padding:6px 3px 2px; color:#43362b; font-size:11px; font-weight:750; }
+.mood-note { position:absolute; width:145px; background:#f6dc79; padding:14px; color:#4a3921; box-shadow:0 8px 20px #5d40251f; transform:rotate(3deg); font-family:var(--site-font-heading); font-size:16px; }
+.mood-piece.selected { outline:3px solid var(--site-primary); outline-offset:3px; }
+.bg-options { display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; }
+.bg-options .btn.active { background:var(--site-on-background); color:var(--site-background); }
+.chart-wrap { display:flex; align-items:center; gap:22px; flex-wrap:wrap; }
+.donut { width:178px; height:178px; border-radius:50%; background:conic-gradient(#d94f35 0 35%,#e9bd54 35% 58%,#648b68 58% 76%,#b9a1cf 76% 100%); position:relative; flex:0 0 auto; }
+.donut::after { content:""; position:absolute; inset:27px; background:var(--site-background); border-radius:50%; }
+.donut-center { position:absolute; inset:0; display:grid; place-content:center; text-align:center; z-index:1; font-size:11px; opacity:.8; }
+.donut-center strong { font-family:var(--site-font-heading); font-size:23px; color:var(--site-on-background); }
+.legend { display:grid; gap:10px; flex:1; min-width:160px; }
+.legend-row { display:flex; align-items:center; gap:8px; font-size:12px; }
+.swatch { width:10px; height:10px; border-radius:3px; }
+.progress { height:8px; border-radius:999px; background:color-mix(in srgb,var(--site-on-background) 12%,transparent); overflow:hidden; margin-top:8px; }
+.progress span { display:block; height:100%; width:42%; background:var(--site-primary); border-radius:999px; }
+.invite-card { border:1px solid color-mix(in srgb,var(--site-on-background) 12%,transparent); border-radius:14px; padding:13px; display:flex; gap:10px; align-items:center; }
+.avatar { width:35px; height:35px; border-radius:50%; display:grid; place-items:center; background:color-mix(in srgb,var(--site-secondary) 40%,transparent); font-weight:800; }
+.hidden { display:none !important; }
+.toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#2d3027; color:white; padding:12px 18px; border-radius:999px; box-shadow:0 10px 30px #0003; z-index:20; font-size:13px; }
+.modal-backdrop { position:fixed; inset:0; background:#1c1711a6; display:grid; place-items:center; z-index:30; padding:18px; }
+.modal { width:min(540px,100%); background:var(--site-background); color:var(--site-on-background); border-radius:24px; padding:25px; max-height:90vh; overflow:auto; }
+.modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:18px; }
+@media(max-width:1000px) { .event-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .workspace { grid-template-columns:1fr; } .sidebar { position:static; } .nav { grid-template-columns:repeat(3,minmax(0,1fr)); } .nav button { justify-content:center; text-align:center; padding:10px 6px; } .nav .emoji { width:auto; } }
+@media(max-width:650px) { .topbar { align-items:flex-start; } .top-actions .pill { display:none; } main { padding:16px; } .event-grid,.two-col,.three-col { grid-template-columns:1fr; } .event-card { min-height:185px; } .event-card .art { height:100px; } .content-head { display:block; } .view-toggle { width:max-content; margin-top:14px; } .bigday { align-items:flex-start; flex-direction:column; } .nav { grid-template-columns:repeat(2,minmax(0,1fr)); } .panel { padding:16px; } .day { min-height:63px; padding:4px; } .day .event-dot { font-size:8px; } .calendar { gap:3px; } }
+</style>
+</head>
+<body>
+<div id="app" style="--bg-opacity:0;--bg-blur:0px;--bg-wash:transparent;">
+<div class="shell">
+<header class="topbar">
+  <div class="brand"><span class="brandmark">✳</span><span>season <span style="font-weight:400">&</span> gather</span></div>
+  <div class="top-actions"><span class="pill">A little planning, a lot of magic</span><button class="btn" id="themeBtn">◐ Appearance</button><button class="btn primary" id="switchEventBtn">My events ↗</button></div>
+</header>
+<section id="cloudAccount" aria-label="Cloud account" style="padding:14px clamp(16px,4vw,48px);background:#f5eadc;border-bottom:1px solid #e1d1bf;color:#302821;display:flex;gap:10px;align-items:end;flex-wrap:wrap;font:14px/1.4 system-ui,sans-serif;position:relative;z-index:5">
+  <div style="min-width:180px;flex:1"><strong style="display:block">Save your planner across devices</strong><small id="cloudStatus">Demo mode — connect Supabase to enable cloud saving.</small></div>
+  <label style="font-size:12px;font-weight:700">Email<input id="cloudEmail" type="email" autocomplete="email" placeholder="you@example.com" style="display:block;width:190px;max-width:100%;padding:9px;border:1px solid #d7c5b2;border-radius:9px;background:white;color:#302821"></label>
+  <label style="font-size:12px;font-weight:700">Password<input id="cloudPassword" type="password" autocomplete="current-password" placeholder="At least 6 characters" style="display:block;width:190px;max-width:100%;padding:9px;border:1px solid #d7c5b2;border-radius:9px;background:white;color:#302821"></label>
+  <button id="cloudSignIn" type="button" style="border:0;border-radius:999px;padding:10px 14px;background:#d94f35;color:white;font-weight:700;cursor:pointer">Sign in</button>
+  <button id="cloudSignUp" type="button" style="border:1px solid #c8b4a0;border-radius:999px;padding:10px 14px;background:white;color:#302821;font-weight:700;cursor:pointer">Create account</button>
+  <button id="cloudSignOut" type="button" hidden style="border:1px solid #c8b4a0;border-radius:999px;padding:10px 14px;background:white;color:#302821;font-weight:700;cursor:pointer">Sign out</button>
+</section>
+<main>
+<section id="eventChooser">
+  <div class="eyebrow">Make room for the season</div>
+  <h1>Every season<br>has a story.</h1>
+  <p class="intro muted">Choose what you're planning. Gather ideas, recipes, people and little details in one colourful home — from the first spark of inspiration to <em>The Big Day!</em></p>
+  <div class="event-grid">
+    <button class="event-card" data-event="Autumn gatherings" style="--card-bg:#f3e1ce;--art-bg:#e5bd88"><div class="art">🍂 🎃</div><div class="copy"><strong>Autumn gatherings</strong><small>Cosy dinners, harvest & Halloween</small></div></button>
+    <button class="event-card" data-event="Christmas" style="--card-bg:#e4ebdd;--art-bg:#b9c9ae"><div class="art">🎄 ✨</div><div class="copy"><strong>Christmas</strong><small>From first lights to festive day</small></div></button>
+    <button class="event-card" data-event="Spring & Easter" style="--card-bg:#f3e5e9;--art-bg:#e8c6d0"><div class="art">🌷 🐣</div><div class="copy"><strong>Spring & Easter</strong><small>Fresh starts and bright tables</small></div></button>
+    <button class="event-card" data-event="Summer season" style="--card-bg:#f5e8bd;--art-bg:#efce70"><div class="art">🍋 🌼</div><div class="copy"><strong>Summer season</strong><small>Long days, picnics & parties</small></div></button>
+    <button class="event-card" data-event="Halloween" style="--card-bg:#eee0d7;--art-bg:#d7a27c"><div class="art">🕯️ 👻</div><div class="copy"><strong>Halloween</strong><small>Spooky ideas and sweet treats</small></div></button>
+    <button class="event-card" data-event="A birthday season" style="--card-bg:#e6dff2;--art-bg:#cbbbe5"><div class="art">🎂 🎈</div><div class="copy"><strong>Birthday season</strong><small>One person or a whole month</small></div></button>
+    <button class="event-card" data-event="A wedding season" style="--card-bg:#f2e6df;--art-bg:#e5c7b8"><div class="art">💐 🥂</div><div class="copy"><strong>Wedding season</strong><small>Plan the lead-up together</small></div></button>
+    <button class="event-card custom" id="customEvent"><div><span class="plus">＋</span><strong style="font-family:var(--site-font-heading);font-size:24px">Create your own</strong><small class="muted" style="display:block;margin-top:6px">Name any season or occasion</small></div></button>
+  </div>
+  <div class="panel" style="max-width:780px"><div class="panel-head"><div><h3>Seasonal inspiration, to get you started</h3><p class="muted">A few prompts to turn a blank page into a plan.</p></div><span style="font-size:27px">✷</span></div><div class="three-col"><div><span class="chip">LOOK & FEEL</span><p style="margin:10px 0 0;font-size:13px">What colours, textures and little rituals feel like this season?</p></div><div><span class="chip">GATHER</span><p style="margin:10px 0 0;font-size:13px">Who would you love to bring together, and what would make it special?</p></div><div><span class="chip">MAKE & EAT</span><p style="margin:10px 0 0;font-size:13px">What could you cook, bake, make or collect along the way?</p></div></div></div>
+</section>
+<section id="planner" class="hidden">
+<div class="workspace">
+<aside class="sidebar">
+<button class="event-switch" id="backToEvents"><span style="font-size:11px;text-transform:uppercase;letter-spacing:.1em;opacity:.65">Planning season</span><b id="sidebarEvent">Autumn gatherings</b><small>← Change event</small></button>
+<nav class="nav" id="nav">
+<button class="active" data-section="overview"><span class="emoji">✦</span> Overview</button>
+<button data-section="calendar"><span class="emoji">▦</span> Calendar</button>
+<button data-section="todo"><span class="emoji">☑</span> To-do & ideas</button>
+<button data-section="recipes"><span class="emoji">♨</span> Recipes</button>
+<button data-section="shopping"><span class="emoji">🛒</span> Shopping list</button>
+<button data-section="party"><span class="emoji">♡</span> Party & invites</button>
+<button data-section="moodboard"><span class="emoji">▧</span> Moodboard</button>
+<button data-section="budget"><span class="emoji">◒</span> Budget</button>
+<button data-section="decorations"><span class="emoji">✺</span> Decorations</button>
+<button data-section="cards"><span class="emoji">✉</span> Cards</button>
+</nav>
+<div style="margin:20px 5px 4px;padding-top:15px;border-top:1px solid color-mix(in srgb,var(--site-on-background) 13%,transparent)"><div class="eyebrow">Season dates</div><label class="field" style="margin-top:10px">Season begins<input type="date" id="startDate" value="2026-10-01"></label><label class="field" style="margin-top:10px">The Big Day!<input type="date" id="bigDayDate" value="2026-12-25"></label><p class="muted" style="font-size:10px;line-height:1.4;margin:10px 0 0">Plan the whole season, with one optional culmination day.</p></div>
+</aside>
+<div class="maincontent">
+<section class="section" id="section-overview">
+<div class="content-head"><div><div class="eyebrow">Your seasonal headquarters</div><h2 id="overviewTitle">A season to savour.</h2><p class="muted">A little at a time adds up to something lovely.</p></div><div class="view-toggle"><button class="active" data-view="single">Single view</button><button data-view="side">Side by side</button></div></div>
+<div class="bigday"><div><div class="eyebrow" style="color:#ffe0b7">Save the date</div><h3>The Big Day!</h3><p style="margin:0;opacity:.86;font-size:13px">Your season's culmination — the rest of the planning can unfold around it.</p></div><label class="field" style="min-width:160px">Choose your date<input type="date" value="2026-12-25" id="bigDayInline"></label></div>
+<div class="three-col"><div class="stat"><small>Ideas collected</small><strong id="statIdeas">4</strong><span class="muted" style="font-size:11px">Your next little sparks</span></div><div class="stat"><small>Budget planned</small><strong id="statBudget">£420</strong><span class="muted" style="font-size:11px">Across your people & plans</span></div><div class="stat"><small>Recipes saved</small><strong id="statRecipes">3</strong><span class="muted" style="font-size:11px">Ready to make</span></div></div>
+<div class="two-col" style="margin-top:18px" id="overviewPanels"><div class="panel"><div class="panel-head"><div><h3>Little things to do next</h3><p class="muted">Your idea list, always in progress.</p></div><button class="btn" data-goto="todo">View all</button></div><div class="list" id="overviewTodos"></div></div><div class="panel"><div class="panel-head"><div><h3>Coming up</h3><p class="muted">A peek at your seasonal calendar.</p></div><button class="btn" data-goto="calendar">Calendar</button></div><div class="list" id="overviewUpcoming"></div></div></div>
+<div class="panel"><div class="panel-head"><div><h3>A seasonal prompt</h3><p class="muted">Use it to spark a new idea.</p></div><button class="btn soft" id="newPrompt">↻ Another prompt</button></div><p id="promptText" style="font-family:var(--site-font-heading);font-size:23px;line-height:1.35;margin-bottom:0">What could you make a tradition this year — even a tiny one?</p></div>
+</section>
+<section class="section hidden" id="section-calendar"><div class="content-head"><div><div class="eyebrow">The season at a glance</div><h2>Calendar</h2><p class="muted">Add custom dates or move ideas and recipes onto a day.</p></div><button class="btn primary" id="addCalendarEvent">＋ Add date</button></div><div class="panel"><div class="panel-head"><div><h3 id="calendarMonth">December 2026</h3><p class="muted">Select a date to see what's planned.</p></div><div><button class="btn" id="prevMonth">←</button> <button class="btn" id="nextMonth">→</button></div></div><div class="calendar" id="calendarGrid"></div></div><div class="panel"><div class="panel-head"><div><h3>Season dates & milestones</h3><p class="muted">Suggested dates are editable — make this season your own.</p></div></div><div class="list" id="dateList"></div></div></section>
+<section class="section hidden" id="section-todo"><div class="content-head"><div><div class="eyebrow">Collect every little spark</div><h2>To-do & ideas</h2><p class="muted">Add ideas now; schedule them when you're ready.</p></div></div><div class="panel"><form class="form-row" id="todoForm"><label class="field">Idea or task<input id="todoInput" placeholder="e.g. Make dried orange garlands" required></label><label class="field" style="max-width:150px">Type<select id="todoType"><option>Idea</option><option>Task</option><option>Tradition</option></select></label><button class="btn primary" type="submit">＋ Add idea</button></form></div><div class="panel"><div class="panel-head"><div><h3>Your idea bank</h3><p class="muted">Tick off, edit, or add an idea to the calendar.</p></div></div><div class="list" id="todoList"></div></div></section>
+<section class="section hidden" id="section-recipes"><div class="content-head"><div><div class="eyebrow">Something delicious is coming</div><h2>Recipes</h2><p class="muted">Save recipes, schedule a dish, and send its ingredients to your shopping list.</p></div><button class="btn primary" id="addRecipeBtn">＋ Add recipe</button></div><div class="panel"><div class="panel-head"><div><h3>Bring in an Instagram recipe</h3><p class="muted">Paste a Reel link, then add the caption or recipe text if you have it.</p></div><span style="font-size:25px">◎</span></div><form id="instagramForm"><label class="field">Instagram Reel or post URL<input id="instagramUrl" type="url" placeholder="https://www.instagram.com/reel/…" required></label><label class="field" style="margin-top:12px">Caption, ingredients or instructions (optional)<textarea id="instagramText" placeholder="Paste the caption or any visible recipe details here…"></textarea></label><div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-top:12px"><small class="muted" style="max-width:370px;line-height:1.5">Instagram links don't reliably expose full recipe text automatically. In the deployed version, this can connect to a server-side importer and use pasted text or your corrections as a fallback.</small><button class="btn primary" type="submit">Extract recipe →</button></div></form><div id="importResult" class="hidden" style="margin-top:16px;padding:15px;border-radius:14px;background:color-mix(in srgb,var(--site-secondary) 23%,transparent)"></div></div><div class="panel"><div class="panel-head"><div><h3>Your recipe box</h3><p class="muted">Schedule any dish to add ingredients to your shopping list.</p></div></div><div id="recipeList"></div></div></section>
+<section class="section hidden" id="section-shopping"><div class="content-head"><div><div class="eyebrow">One less thing to remember</div><h2>Shopping list</h2><p class="muted">Recipe ingredients and your own extras, all together.</p></div></div><div class="panel"><form class="form-row" id="shoppingForm"><label class="field">Add an item<input id="shoppingInput" placeholder="e.g. unsalted butter" required></label><label class="field" style="max-width:130px">Quantity<input id="shoppingQty" placeholder="e.g. 250g"></label><button class="btn primary" type="submit">＋ Add item</button></form></div><div class="panel"><div class="panel-head"><div><h3>To buy</h3><p class="muted" id="shoppingProgress">0 items ticked off</p></div><button class="btn" id="clearBought">Clear bought</button></div><div class="list" id="shoppingList"></div></div></section>
+<section class="section hidden" id="section-party"><div class="content-head"><div><div class="eyebrow">Make it a gathering</div><h2>Party & invites</h2><p class="muted">Plan the atmosphere, the guest list and all the little details.</p></div></div><div class="two-col"><div class="panel"><div class="panel-head"><div><h3>Invites</h3><p class="muted">Keep track of who you're inviting.</p></div></div><form id="inviteForm" class="form-row"><label class="field">Person's name<input id="inviteName" placeholder="Name" required></label><button class="btn primary" type="submit">＋ Add</button></form><div id="inviteList" class="list" style="margin-top:14px"></div></div><div class="panel"><div class="panel-head"><div><h3>Party planning notes</h3><p class="muted">Your flexible space for the big-picture thinking.</p></div></div><label class="field">Notes<textarea id="partyNotes" placeholder="Atmosphere, music, seating, timings, things to delegate…"></textarea></label><button class="btn" id="savePartyNotes" style="margin-top:10px">Save notes</button></div></div></section>
+<section class="section hidden" id="section-moodboard"><div class="content-head"><div><div class="eyebrow">Collect the feeling</div><h2>Moodboard</h2><p class="muted">Arrange inspiration freely, then decide how much of it belongs across your planner.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="uploadMoodButton">↑ Upload pictures</button><input id="moodUpload" type="file" accept="image/*" multiple hidden><button class="btn primary" id="addMoodItem">＋ Add inspiration</button></div></div><div class="panel"><div class="panel-head"><div><h3>Your canvas</h3><p class="muted">Select a tile to use that image as your background, or use the whole board.</p></div><span class="chip">FREE-FORM CANVAS</span></div><div class="moodboard" id="moodboard"><div class="mood-piece" data-mood="0" style="left:7%;top:11%;--rot:-5deg;--tile:#c56e47"><div class="photo">🎃</div><small>Autumn colour</small></div><div class="mood-piece" data-mood="1" style="left:36%;top:8%;--rot:4deg;--tile:#d6c19a"><div class="photo">🕯️</div><small>Warm candlelight</small></div><div class="mood-piece" data-mood="2" style="left:65%;top:16%;--rot:-2deg;--tile:#8b9c79"><div class="photo">🌿</div><small>Foraged greens</small></div><div class="mood-note" style="left:16%;top:58%">Make it feel like a slow Sunday. ✷</div><div class="mood-piece" data-mood="3" style="left:57%;top:55%;--rot:5deg;--tile:#e8c3a7"><div class="photo">🥧</div><small>Something baking</small></div></div><div class="bg-options"><button class="btn" data-bg="none">Keep separate</button><button class="btn" data-bg="whole">Use whole moodboard as background</button><button class="btn" data-bg="image">Use selected image as background</button><button class="btn" id="bgReadability">Adjust readability</button></div><p class="muted" id="bgStatus" style="font-size:12px;margin:12px 0 0">The moodboard is currently separate from the rest of your planner.</p><div class="form-row" style="margin-top:14px"><label class="field">Add a note or colour idea<input id="moodNoteInput" placeholder="e.g. cinnamon, copper, velvet ribbon"></label><button class="btn" id="addMoodNote">＋ Add note</button></div></div></section>
+<section class="section hidden" id="section-budget"><div class="content-head"><div><div class="eyebrow">Make the money make sense</div><h2>Budget</h2><p class="muted">Plan expenses, add contributors, and see the shape of your spending.</p></div><div class="view-toggle"><button class="active" data-budget-view="list">List</button><button data-budget-view="visual">Visual</button></div></div><div class="three-col"><div class="stat"><small>Planned budget</small><strong id="budgetTotal">£420</strong><span class="muted" style="font-size:11px">All planned expenses</span></div><div class="stat"><small>Paid so far</small><strong id="budgetPaid">£85</strong><span class="muted" style="font-size:11px">Marked as paid</span></div><div class="stat"><small>Still to pay</small><strong id="budgetDue">£335</strong><span class="muted" style="font-size:11px">Remaining expenses</span></div></div><div class="panel" style="margin-top:18px"><div class="panel-head"><div><h3>People & contributors</h3><p class="muted">Add names once, then choose who paid for each expense.</p></div></div><form class="form-row" id="personForm"><label class="field">Person's name<input id="personName" placeholder="e.g. Alex" required></label><button class="btn" type="submit">＋ Add person</button></form><div class="chips" id="peopleChips"></div></div><div id="budgetListPanel" class="panel"><div class="panel-head"><div><h3>Planned expenses</h3><p class="muted">Edit details, tick paid, and record who covered it.</p></div></div><form id="expenseForm"><div class="form-row"><label class="field">Expense<input id="expenseName" placeholder="e.g. Table flowers" required></label><label class="field" style="max-width:120px">Amount (£)<input id="expenseAmount" type="number" min="0" step="0.01" placeholder="0.00" required></label><label class="field">Category<select id="expenseCategory"><option>Food & drink</option><option>Decorations</option><option>Gifts</option><option>Party</option><option>Other</option></select></label></div><div class="form-row" style="margin-top:10px"><label class="field">Paid by<select id="expensePayer"><option value="">Not paid yet</option></select></label><button class="btn primary" type="submit">＋ Add expense</button></div></form><div class="list" id="expenseList" style="margin-top:16px"></div></div><div id="budgetVisualPanel" class="panel hidden"><div class="panel-head"><div><h3>Budget at a glance</h3><p class="muted">A visual breakdown of your planned spend.</p></div></div><div class="chart-wrap"><div class="donut" id="budgetDonut"><div class="donut-center"><span>planned</span><strong id="chartTotal">£420</strong></div></div><div class="legend" id="budgetLegend"></div></div><div style="margin-top:24px"><div style="display:flex;justify-content:space-between;font-size:12px"><b>Budget used (paid)</b><span id="paidPercent">20%</span></div><div class="progress"><span id="paidProgress" style="width:20%"></span></div></div><p class="muted" style="font-size:11px;margin:15px 0 0">Visual preview uses category totals; a production build can use a chart library for interactive pie, donut and spending-over-time charts.</p></div></section>
+<section class="section hidden" id="section-decorations"><div class="content-head"><div><div class="eyebrow">Set the scene</div><h2>Decorations</h2><p class="muted">Keep track of what you need, what you have, and what you've made.</p></div></div><div class="panel"><form id="decorForm" class="form-row"><label class="field">Decoration<input id="decorInput" placeholder="e.g. paper stars" required></label><label class="field" style="max-width:150px">Status<select id="decorStatus"><option>Need to buy</option><option>Already have</option><option>Make it</option></select></label><button class="btn primary" type="submit">＋ Add</button></form></div><div class="panel"><div class="list" id="decorList"></div></div></section>
+<section class="section hidden" id="section-cards"><div class="content-head"><div><div class="eyebrow">A little note goes a long way</div><h2>Cards</h2><p class="muted">Keep track of the cards to write and send.</p></div></div><div class="panel"><form id="cardForm" class="form-row"><label class="field">Name or household<input id="cardName" placeholder="e.g. The Robinsons" required></label><button class="btn primary" type="submit">＋ Add card</button></form></div><div class="panel"><div class="panel-head"><div><h3>Card list</h3><p class="muted">Tick each step as you go.</p></div></div><div class="list" id="cardList"></div></div></section>
+</div></div>
+</section>
+</main>
+</div>
+<div id="modalRoot"></div><div id="toast" class="toast hidden" role="status"></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./config.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+let currentEvent = 'Autumn gatherings';
+let currentSection = 'overview';
+let calendarDate = new Date(2026,11,1);
+let selectedMood = 0;
+let moodBackground = 'none';
+let readableBg = false;
+let budgetView = 'list';
+let sideBySide = false;
+let nextId = 20;
+const prompts = [
+ 'What could you make a tradition this year — even a tiny one?',
+ 'Which details will make the season feel unmistakably yours?',
+ 'What could you prepare early, so you can be present when it matters?',
+ 'What recipe, song or scent instantly brings this season to mind?',
+ 'What is one lovely thing you could do with the people you care about?'
+];
+let promptIndex = 0;
+let todos = [
+ {id:1,text:'Try a new spiced apple cake',type:'Idea',done:false},
+ {id:2,text:'Collect jars for candle holders',type:'Task',done:false},
+ {id:3,text:'Choose a colour palette',type:'Idea',done:true},
+ {id:4,text:'Ask everyone about dietary needs',type:'Task',done:false}
+];
+let recipes = [
+ {id:5,name:'Spiced apple cake',emoji:'🍎',desc:'A soft, cinnamon-scented cake for sharing.',ingredients:['Apples','Plain flour','Butter','Eggs','Cinnamon','Caster sugar']},
+ {id:6,name:'Roasted squash soup',emoji:'🥣',desc:'A warming starter with sage and crispy seeds.',ingredients:['Butternut squash','Vegetable stock','Onion','Sage','Pumpkin seeds']},
+ {id:7,name:'Cranberry & orange spritz',emoji:'🍊',desc:'A bright seasonal drink, with or without fizz.',ingredients:['Cranberry juice','Oranges','Sparkling water','Rosemary']}
+];
+let shopping = [{id:8,text:'Apples',qty:'6',done:false,source:'Spiced apple cake'},{id:9,text:'Cinnamon',qty:'1 jar',done:false,source:'Spiced apple cake'},{id:10,text:'Cranberry juice',qty:'1 bottle',done:true,source:''}];
+let events = [
+ {id:11,date:'2026-10-31',text:'Halloween table',type:'Custom date'},
+ {id:12,date:'2026-11-29',text:'First advent Sunday',type:'Suggested date'},
+ {id:13,date:'2026-12-12',text:'Bake & decorate',type:'Idea'},
+ {id:14,date:'2026-12-25',text:'The Big Day!',type:'Milestone'}
+];
+let invites = [{id:15,name:'Alex',status:'Not sent'},{id:16,name:'Jamie',status:'Not sent'},{id:17,name:'Morgan',status:'Maybe'}];
+let people = ['You','Alex','Jamie'];
+let expenses = [
+ {id:21,name:'Food & ingredients',amount:140,category:'Food & drink',payer:'Alex'},
+ {id:22,name:'Table decorations',amount:65,category:'Decorations',payer:'You'},
+ {id:23,name:'Gifts',amount:110,category:'Gifts',payer:''},
+ {id:24,name:'Drinks',amount:65,category:'Food & drink',payer:''},
+ {id:25,name:'Extra seating',amount:40,category:'Party',payer:''}
+];
+let decorations = [{id:26,text:'Fairy lights',status:'Already have',done:true},{id:27,text:'Dried orange garland',status:'Make it',done:false},{id:28,text:'Candles',status:'Need to buy',done:false}];
+let cards = [{id:29,name:'The Robinsons',written:false,sent:false},{id:30,name:'Auntie May',written:true,sent:false},{id:31,name:'Sam & Priya',written:false,sent:false}];
+const money = n => '£'+Number(n||0).toLocaleString('en-GB',{minimumFractionDigits:0,maximumFractionDigits:2});
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.remove('hidden');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>t.classList.add('hidden'),2800)}
+function openEvent(name){currentEvent=name;$('#eventChooser').classList.add('hidden');$('#planner').classList.remove('hidden');$('#sidebarEvent').textContent=name;$('#overviewTitle').textContent=name==='Christmas'?'A season to savour.':`Make ${name.toLowerCase()} your own.`;renderAll();showSection('overview')}
+function showChooser(){$('#planner').classList.add('hidden');$('#eventChooser').classList.remove('hidden')}
+$$('.event-card[data-event]').forEach(b=>b.addEventListener('click',()=>openEvent(b.dataset.event)));
+$('#customEvent').addEventListener('click',()=>showModal('Create your own season',`<label class="field">What are you planning?<input id="customEventName" placeholder="e.g. Bonfire season" required></label>`,()=>{const n=$('#customEventName').value.trim();if(n)openEvent(n)}));
+$('#backToEvents').addEventListener('click',showChooser);$('#switchEventBtn').addEventListener('click',showChooser);
+$('#nav').addEventListener('click',e=>{const b=e.target.closest('button[data-section]');if(b)showSection(b.dataset.section)});
+$$('[data-goto]').forEach(b=>b.addEventListener('click',()=>showSection(b.dataset.goto)));
+function showSection(name){currentSection=name;$$('.section').forEach(s=>s.classList.toggle('hidden',s.id!=='section-'+name));$$('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.section===name));if(name==='calendar')renderCalendar();if(name==='budget')renderBudget();}
+$$('[data-view]').forEach(b=>b.addEventListener('click',()=>{sideBySide=b.dataset.view==='side';$$('[data-view]').forEach(x=>x.classList.toggle('active',x===b));$('#overviewPanels').style.gridTemplateColumns=sideBySide?'repeat(2,minmax(0,1fr))':'1fr';if(window.innerWidth<650)$('#overviewPanels').style.gridTemplateColumns='1fr';}));
+$('#bigDayDate').addEventListener('change',syncBigDay);$('#bigDayInline').addEventListener('change',()=>{$('#bigDayDate').value=$('#bigDayInline').value;syncBigDay()});function syncBigDay(){const d=$('#bigDayDate').value;$('#bigDayInline').value=d;const ev=events.find(e=>e.type==='Milestone');if(ev)ev.date=d;renderCalendar();toast('The Big Day! date updated')}
+$('#newPrompt').addEventListener('click',()=>{promptIndex=(promptIndex+1)%prompts.length;$('#promptText').textContent=prompts[promptIndex]});
+function showModal(title,html,onSave){$('#modalRoot').innerHTML=`<div class="modal-backdrop"><div class="modal"><div class="panel-head"><div><div class="eyebrow">Make it yours</div><h2>${title}</h2></div><button class="remove" id="closeModal">×</button></div>${html}<div class="modal-actions"><button class="btn" id="cancelModal">Cancel</button><button class="btn primary" id="saveModal">Save</button></div></div></div>`;$('#closeModal').onclick=$('#cancelModal').onclick=()=>$('#modalRoot').innerHTML='';$('#saveModal').onclick=()=>{if(onSave()!==false)$('#modalRoot').innerHTML=''};$('#modalRoot').querySelector('input')?.focus()}
+function renderAll(){renderTodos();renderRecipes();renderShopping();renderCalendar();renderInvites();renderPeople();renderExpenses();renderDecorations();renderCards();renderOverview();renderBudget();$('#partyNotes').value=localStorage.getItem('sg-party-'+currentEvent)||''}
+function renderOverview(){$('#statIdeas').textContent=todos.length;$('#statRecipes').textContent=recipes.length;$('#statBudget').textContent=money(expenses.reduce((a,e)=>a+e.amount,0));$('#overviewTodos').innerHTML=todos.slice(0,3).map(t=>`<div class="list-item ${t.done?'done':''}"><input type="checkbox" data-todo-check="${t.id}" ${t.done?'checked':''}><span class="item-text">${esc(t.text)}<small>${esc(t.type)}</small></span></div>`).join('');$('#overviewUpcoming').innerHTML=[...events].sort((a,b)=>a.date.localeCompare(b.date)).slice(0,3).map(e=>`<div class="list-item"><span>📅</span><span class="item-text">${esc(e.text)}<small>${formatDate(e.date)}</small></span></div>`).join('');}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+$('#todoForm').addEventListener('submit',e=>{e.preventDefault();todos.push({id:nextId++,text:$('#todoInput').value.trim(),type:$('#todoType').value,done:false});$('#todoInput').value='';renderTodos();renderOverview();toast('Idea added')});
+function renderTodos(){$('#todoList').innerHTML=todos.map(t=>`<div class="list-item ${t.done?'done':''}"><input type="checkbox" data-todo-check="${t.id}" ${t.done?'checked':''}><span class="item-text">${esc(t.text)}<small>${esc(t.type)}</small></span><button class="btn" data-schedule-todo="${t.id}">Add to calendar</button><button class="remove" data-edit-todo="${t.id}" aria-label="Edit idea">✎</button><button class="remove" data-delete-todo="${t.id}" aria-label="Delete idea">×</button></div>`).join('')||'<p class="muted">Your idea bank is ready for its first spark.</p>'}
+$('#todoList').addEventListener('click',e=>{const id=Number(e.target.dataset.scheduleTodo||e.target.dataset.editTodo||e.target.dataset.deleteTodo);if(!id)return;const t=todos.find(x=>x.id===id);if(e.target.dataset.scheduleTodo){showModal('Add idea to calendar',`<p>${esc(t.text)}</p><label class="field">Choose a date<input id="scheduleDate" type="date" value="2026-12-12" required></label>`,()=>{events.push({id:nextId++,date:$('#scheduleDate').value,text:t.text,type:'Idea'});renderCalendar();renderOverview();toast('Idea added to calendar')})}else if(e.target.dataset.editTodo){showModal('Edit idea',`<label class="field">Idea or task<input id="editTodoText" value="${esc(t.text)}" required></label><label class="field" style="margin-top:12px">Type<select id="editTodoType"><option ${t.type==='Idea'?'selected':''}>Idea</option><option ${t.type==='Task'?'selected':''}>Task</option><option ${t.type==='Tradition'?'selected':''}>Tradition</option></select></label>`,()=>{t.text=$('#editTodoText').value.trim();t.type=$('#editTodoType').value;renderTodos();renderOverview()})}else{todos=todos.filter(x=>x.id!==id);renderTodos();renderOverview()}});
+document.addEventListener('change',e=>{if(e.target.dataset.todoCheck){const t=todos.find(x=>x.id===Number(e.target.dataset.todoCheck));if(t)t.done=e.target.checked;renderTodos();renderOverview()}if(e.target.dataset.shopCheck){const i=shopping.find(x=>x.id===Number(e.target.dataset.shopCheck));if(i)i.done=e.target.checked;renderShopping()}if(e.target.dataset.expensePaid){const x=expenses.find(x=>x.id===Number(e.target.dataset.expensePaid));if(x){x.payer=e.target.checked?(x.payer||people[0]||'You'):'';renderExpenses();renderBudget()}}if(e.target.dataset.payer){const x=expenses.find(x=>x.id===Number(e.target.dataset.payer));if(x){x.payer=e.target.value;renderExpenses();renderBudget()}}if(e.target.dataset.decorCheck){const x=decorations.find(x=>x.id===Number(e.target.dataset.decorCheck));if(x)x.done=e.target.checked;renderDecorations()}if(e.target.dataset.cardWritten||e.target.dataset.cardSent){const id=Number(e.target.dataset.cardWritten||e.target.dataset.cardSent),c=cards.find(x=>x.id===id);if(c){if(e.target.dataset.cardWritten)c.written=e.target.checked;else c.sent=e.target.checked;renderCards()}}if(e.target.dataset.inviteStatus){const i=invites.find(x=>x.id===Number(e.target.dataset.inviteStatus));if(i)i.status=e.target.value}});
+function formatDate(d){if(!d)return 'Date not set';return new Date(d+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}
+function renderCalendar(){const y=calendarDate.getFullYear(),m=calendarDate.getMonth();$('#calendarMonth').textContent=calendarDate.toLocaleDateString('en-GB',{month:'long',year:'numeric'});const first=new Date(y,m,1).getDay();const offset=(first+6)%7;const count=new Date(y,m+1,0).getDate();let html=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d=>`<div class="dayname">${d}</div>`).join('');for(let i=0;i<offset;i++)html+='<div class="day blank"></div>';for(let d=1;d<=count;d++){const key=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;const dayEvents=events.filter(ev=>ev.date===key);html+=`<button class="day" data-calendar-date="${key}" style="text-align:left;color:inherit"><span class="num">${d}</span>${dayEvents.map(ev=>`<div class="event-dot">${esc(ev.text)}</div>`).join('')}</button>`}$('#calendarGrid').innerHTML=html;$('#dateList').innerHTML=[...events].sort((a,b)=>a.date.localeCompare(b.date)).map(ev=>`<div class="list-item"><span>📍</span><span class="item-text">${esc(ev.text)}<small>${formatDate(ev.date)} · ${esc(ev.type)}</small></span><button class="remove" data-edit-event="${ev.id}">✎</button><button class="remove" data-delete-event="${ev.id}">×</button></div>`).join('')}
+$('#prevMonth').onclick=()=>{calendarDate.setMonth(calendarDate.getMonth()-1);renderCalendar()};$('#nextMonth').onclick=()=>{calendarDate.setMonth(calendarDate.getMonth()+1);renderCalendar()};$('#addCalendarEvent').onclick=()=>showModal('Add a seasonal date',`<label class="field">What is happening?<input id="newEventText" placeholder="e.g. Pick up the tree" required></label><label class="field" style="margin-top:12px">Date<input id="newEventDate" type="date" value="2026-12-10" required></label><label class="field" style="margin-top:12px">Type<select id="newEventType"><option>Custom date</option><option>Suggested date</option><option>Reminder</option></select></label>`,()=>{events.push({id:nextId++,text:$('#newEventText').value.trim(),date:$('#newEventDate').value,type:$('#newEventType').value});calendarDate=new Date($('#newEventDate').value+'T12:00:00');renderCalendar();renderOverview();toast('Date added')});
+$('#dateList').addEventListener('click',e=>{const id=Number(e.target.dataset.editEvent||e.target.dataset.deleteEvent);if(!id)return;const ev=events.find(x=>x.id===id);if(e.target.dataset.editEvent)showModal('Edit calendar date',`<label class="field">Title<input id="eventEditText" value="${esc(ev.text)}" required></label><label class="field" style="margin-top:12px">Date<input id="eventEditDate" type="date" value="${ev.date}" required></label>`,()=>{ev.text=$('#eventEditText').value;ev.date=$('#eventEditDate').value;renderCalendar();renderOverview()});else{events=events.filter(x=>x.id!==id);renderCalendar();renderOverview()}});
+$('#calendarGrid').addEventListener('click',e=>{const b=e.target.closest('[data-calendar-date]');if(!b)return;const date=b.dataset.calendarDate;showModal('Plan this day',`<p class="muted">${formatDate(date)}</p><label class="field">What would you like to add?<input id="dayEventText" placeholder="A task, reminder or gathering" required></label><label class="field" style="margin-top:12px">Add a recipe<select id="dayRecipe"><option value="">No recipe</option>${recipes.map(r=>`<option value="${r.id}">${esc(r.name)}</option>`).join('')}</select></label>`,()=>{const txt=$('#dayEventText').value.trim();if(txt)events.push({id:nextId++,date,text:txt,type:'Custom date'});const r=recipes.find(x=>x.id===Number($('#dayRecipe').value));if(r)scheduleRecipe(r,date);calendarDate=new Date(date+'T12:00:00');renderCalendar();renderShopping();renderOverview();toast('Day updated')})});
+function renderRecipes(){$('#recipeList').innerHTML=recipes.map(r=>`<div class="recipe-card"><div class="recipe-art">${r.emoji||'🍽️'}</div><div><h3>${esc(r.name)}</h3><p class="muted">${esc(r.desc||'')}</p><p><b>Ingredients:</b> ${r.ingredients.map(esc).join(', ')}</p><div class="chips"><button class="btn primary" data-schedule-recipe="${r.id}">Add to calendar</button><button class="btn" data-edit-recipe="${r.id}">Edit recipe</button><button class="btn" data-add-ingredients="${r.id}">Add ingredients to list</button></div></div></div>`).join('')||'<p class="muted">Your recipe box is empty. Add something delicious.</p>'}
+$('#addRecipeBtn').onclick=()=>showRecipeModal();function showRecipeModal(r){showModal(r?'Edit recipe':'Add a recipe',`<label class="field">Recipe name<input id="recipeName" value="${esc(r?.name||'')}" required></label><label class="field" style="margin-top:12px">Short description<input id="recipeDesc" value="${esc(r?.desc||'')}" placeholder="A sentence about the dish"></label><label class="field" style="margin-top:12px">Ingredients (one per line)<textarea id="recipeIngredients" required>${esc((r?.ingredients||[]).join('\n'))}</textarea></label>`,()=>{const name=$('#recipeName').value.trim();if(!name)return false;const data={name,desc:$('#recipeDesc').value.trim(),ingredients:$('#recipeIngredients').value.split('\n').map(x=>x.trim()).filter(Boolean),emoji:r?.emoji||'🍽️'};if(r)Object.assign(r,data);else recipes.push({id:nextId++,...data});renderRecipes();renderOverview();toast('Recipe saved')})}
+$('#recipeList').addEventListener('click',e=>{const id=Number(e.target.dataset.scheduleRecipe||e.target.dataset.editRecipe||e.target.dataset.addIngredients);if(!id)return;const r=recipes.find(x=>x.id===id);if(e.target.dataset.editRecipe)showRecipeModal(r);else if(e.target.dataset.addIngredients){addIngredients(r);toast('Ingredients added to shopping list')}else showModal('Add recipe to calendar',`<p><b>${esc(r.name)}</b></p><label class="field">Date to serve it<input id="recipeDate" type="date" value="2026-12-25" required></label>`,()=>{const d=$('#recipeDate').value;scheduleRecipe(r,d);events.push({id:nextId++,date:d,text:r.name,type:'Recipe'});calendarDate=new Date(d+'T12:00:00');renderCalendar();renderShopping();renderOverview();toast('Recipe scheduled and ingredients added')})});
+function scheduleRecipe(r,date){addIngredients(r);}
+function addIngredients(r){r.ingredients.forEach(ing=>{if(!shopping.some(s=>s.text.toLowerCase()===ing.toLowerCase()&&!s.done))shopping.push({id:nextId++,text:ing,qty:'',done:false,source:r.name})});renderShopping()}
+$('#instagramForm').addEventListener('submit',e=>{e.preventDefault();const url=$('#instagramUrl').value.trim(),txt=$('#instagramText').value.trim();const title=(txt.split('\n').find(Boolean)||'Instagram recipe').slice(0,70);const ingredients=txt.split('\n').map(s=>s.trim()).filter(s=>/^(?:[-•*]|\d+[.)])\s*/.test(s)).map(s=>s.replace(/^(?:[-•*]|\d+[.)])\s*/,''));$('#importResult').classList.remove('hidden');$('#importResult').innerHTML=`<div class="eyebrow">Recipe draft ready to review</div><h3 style="margin-top:8px">${esc(title.replace(/^[-•*\d.)\s]+/,''))}</h3><p style="font-size:12px;line-height:1.6">Source link saved: <a href="${esc(url)}" target="_blank" rel="noreferrer">Open Instagram post ↗</a></p><p style="font-size:12px">${ingredients.length?`Found ${ingredients.length} possible ingredient lines from the text you supplied.`:'No ingredient list detected in the text. Add or correct the ingredients before saving.'}</p><button class="btn primary" id="saveImportedRecipe">Review & add to recipe box</button>`;$('#saveImportedRecipe').onclick=()=>{showModal('Review imported recipe',`<label class="field">Recipe title<input id="importName" value="${esc(title)}" required></label><label class="field" style="margin-top:12px">Ingredients (one per line)<textarea id="importIngredients">${esc(ingredients.join('\n'))}</textarea></label><label class="field" style="margin-top:12px">Instructions or notes<textarea id="importInstructions">${esc(txt)}</textarea></label>`,()=>{const name=$('#importName').value.trim();if(!name)return false;recipes.push({id:nextId++,name,desc:'Imported from Instagram — review details before cooking.',ingredients:$('#importIngredients').value.split('\n').map(x=>x.trim()).filter(Boolean),emoji:'📱',source:url,notes:$('#importInstructions').value});renderRecipes();toast('Recipe added — please verify the details')})};toast('Draft created — check the recipe before saving')});
+$('#shoppingForm').addEventListener('submit',e=>{e.preventDefault();shopping.push({id:nextId++,text:$('#shoppingInput').value.trim(),qty:$('#shoppingQty').value.trim(),done:false,source:''});$('#shoppingInput').value='';$('#shoppingQty').value='';renderShopping()});function renderShopping(){const done=shopping.filter(x=>x.done).length;$('#shoppingProgress').textContent=`${done} of ${shopping.length} items ticked off`;$('#shoppingList').innerHTML=shopping.map(i=>`<div class="list-item ${i.done?'done':''}"><input type="checkbox" data-shop-check="${i.id}" ${i.done?'checked':''}><span class="item-text">${esc(i.text)}<small>${esc(i.qty||'')}${i.source?' · For '+esc(i.source):''}</small></span><button class="remove" data-edit-shop="${i.id}">✎</button><button class="remove" data-delete-shop="${i.id}">×</button></div>`).join('')||'<p class="muted">Your shopping list is clear.</p>'}
+$('#shoppingList').addEventListener('click',e=>{const id=Number(e.target.dataset.editShop||e.target.dataset.deleteShop);if(!id)return;const i=shopping.find(x=>x.id===id);if(e.target.dataset.editShop)showModal('Edit shopping item',`<label class="field">Item<input id="editShopText" value="${esc(i.text)}" required></label><label class="field" style="margin-top:12px">Quantity<input id="editShopQty" value="${esc(i.qty)}"></label>`,()=>{i.text=$('#editShopText').value.trim();i.qty=$('#editShopQty').value.trim();renderShopping()});else{shopping=shopping.filter(x=>x.id!==id);renderShopping()}});$('#clearBought').onclick=()=>{shopping=shopping.filter(x=>!x.done);renderShopping()};
+$('#inviteForm').addEventListener('submit',e=>{e.preventDefault();invites.push({id:nextId++,name:$('#inviteName').value.trim(),status:'Not sent'});$('#inviteName').value='';renderInvites()});function renderInvites(){$('#inviteList').innerHTML=invites.map(i=>`<div class="invite-card"><div class="avatar">${esc(i.name[0]||'?').toUpperCase()}</div><div style="flex:1"><b>${esc(i.name)}</b><div style="font-size:11px;opacity:.65;margin-top:3px">Invite status</div></div><select data-invite-status="${i.id}" style="width:120px;padding:8px"><option ${i.status==='Not sent'?'selected':''}>Not sent</option><option ${i.status==='Sent'?'selected':''}>Sent</option><option ${i.status==='Maybe'?'selected':''}>Maybe</option><option ${i.status==='Confirmed'?'selected':''}>Confirmed</option></select><button class="remove" data-delete-invite="${i.id}">×</button></div>`).join('')}
+$('#inviteList').addEventListener('click',e=>{const id=Number(e.target.dataset.deleteInvite);if(id){invites=invites.filter(x=>x.id!==id);renderInvites()}});$('#savePartyNotes').onclick=()=>{localStorage.setItem('sg-party-'+currentEvent,$('#partyNotes').value);toast('Party notes saved on this preview')};
+const moodColors=['#c56e47','#d6c19a','#8b9c79','#e8c3a7','#b6a0cf','#e4bb60'];function setMoodBackground(mode){moodBackground=mode;const app=$('#app');$$('[data-bg]').forEach(b=>b.classList.toggle('active',b.dataset.bg===mode));if(mode==='none'){app.style.setProperty('--bg-opacity','0');app.style.setProperty('--planner-bg','none');app.style.setProperty('--bg-wash','transparent');$('#bgStatus').textContent='The moodboard is currently separate from the rest of your planner.'}else if(mode==='whole'){app.style.setProperty('--bg-opacity','.24');app.style.setProperty('--planner-bg','linear-gradient(135deg,#d8b99b,#e9d8bd,#9fae8a)');app.style.setProperty('--bg-wash',readableBg?'rgba(255,248,238,.82)':'rgba(255,248,238,.48)');$('#bgStatus').textContent='Whole-board background is on. In the full app, your actual arranged canvas would become the background.'}else{app.style.setProperty('--bg-opacity','.30');app.style.setProperty('--planner-bg',`linear-gradient(135deg,${moodColors[selectedMood%moodColors.length]},#ead8bf)`);app.style.setProperty('--bg-wash',readableBg?'rgba(255,248,238,.85)':'rgba(255,248,238,.5)');$('#bgStatus').textContent='Selected-image background is on. Select another tile to change the image.'}}
+$$('[data-bg]').forEach(b=>b.addEventListener('click',()=>setMoodBackground(b.dataset.bg)));$('#bgReadability').onclick=()=>{readableBg=!readableBg;if(moodBackground!=='none')setMoodBackground(moodBackground);$('#bgReadability').textContent=readableBg?'Readability: extra contrast':'Adjust readability'};$('#moodboard').addEventListener('click',e=>{const tile=e.target.closest('[data-mood]');if(!tile)return;selectedMood=Number(tile.dataset.mood);$$('[data-mood]').forEach(t=>t.classList.toggle('selected',t===tile));if(moodBackground==='image')setMoodBackground('image')});$('#uploadMoodButton').onclick=()=>$('#moodUpload').click();$('#moodUpload').addEventListener('change',e=>{[...e.target.files].forEach(file=>{const reader=new FileReader();reader.onload=()=>{const tile=document.createElement('div');tile.className='mood-piece';tile.dataset.mood=String(nextId++);tile.style.left=(8+Math.random()*55)+'%';tile.style.top=(12+Math.random()*55)+'%';tile.style.setProperty('--rot',(Math.random()*10-5)+'deg');tile.innerHTML=`<div class="photo"><img src="${reader.result}" alt="Uploaded moodboard inspiration" style="width:100%;height:100%;object-fit:cover"></div><small>${esc(file.name.replace(/\.[^.]+$/,''))}</small>`;$('#moodboard').appendChild(tile)};reader.readAsDataURL(file)});e.target.value='';toast('Picture upload added to this preview')});$('#addMoodItem').onclick=()=>showModal('Add inspiration to your board',`<label class="field">Caption<input id="moodCaption" placeholder="e.g. A table full of candlelight" required></label><label class="field" style="margin-top:12px">Image URL (optional)<input id="moodImageUrl" type="url" placeholder="https://…"></label><p class="muted" style="font-size:12px;margin-top:10px">The full app can support image uploads and drag-and-drop placement. This preview adds a visual tile.</p>`,()=>{const caption=$('#moodCaption').value.trim();if(!caption)return false;const tile=document.createElement('div');tile.className='mood-piece';tile.dataset.mood=String(nextId++);tile.style.left=(8+Math.random()*60)+'%';tile.style.top=(12+Math.random()*55)+'%';tile.style.setProperty('--rot',(Math.random()*10-5)+'deg');tile.style.setProperty('--tile',moodColors[Math.floor(Math.random()*moodColors.length)]);tile.innerHTML=`<div class="photo">✷</div><small>${esc(caption)}</small>`;$('#moodboard').appendChild(tile);toast('Inspiration added')});$('#addMoodNote').onclick=()=>{const text=$('#moodNoteInput').value.trim();if(!text)return;const n=document.createElement('div');n.className='mood-note';n.style.left=(12+Math.random()*55)+'%';n.style.top=(25+Math.random()*45)+'%';n.textContent=text;$('#moodboard').appendChild(n);$('#moodNoteInput').value='';toast('Note added to board')};
+let dragTile=null,dragOffsetX=0,dragOffsetY=0;$('#moodboard').addEventListener('pointerdown',e=>{const tile=e.target.closest('.mood-piece,.mood-note');if(!tile)return;dragTile=tile;const r=tile.getBoundingClientRect();const b=$('#moodboard').getBoundingClientRect();dragOffsetX=e.clientX-r.left;dragOffsetY=e.clientY-r.top;tile.setPointerCapture?.(e.pointerId);tile.style.zIndex=20;tile.dataset.dragBaseX=b.left;tile.dataset.dragBaseY=b.top;tile.style.touchAction='none'});document.addEventListener('pointermove',e=>{if(!dragTile)return;const b=$('#moodboard').getBoundingClientRect();const x=Math.max(0,Math.min(b.width-dragTile.offsetWidth,e.clientX-b.left-dragOffsetX));const y=Math.max(0,Math.min(b.height-dragTile.offsetHeight,e.clientY-b.top-dragOffsetY));dragTile.style.left=(x/b.width*100)+'%';dragTile.style.top=(y/b.height*100)+'%'});document.addEventListener('pointerup',()=>{if(dragTile){dragTile.style.zIndex='';dragTile=null;if(moodBackground==='whole')setMoodBackground('whole')}});
+$('#personForm').addEventListener('submit',e=>{e.preventDefault();const n=$('#personName').value.trim();if(n&&!people.includes(n))people.push(n);$('#personName').value='';renderPeople();renderExpenses()});function renderPeople(){$('#peopleChips').innerHTML=people.map(p=>`<span class="chip">${esc(p)}</span>`).join('');$('#expensePayer').innerHTML='<option value="">Not paid yet</option>'+people.map(p=>`<option>${esc(p)}</option>`).join('')}
+$('#expenseForm').addEventListener('submit',e=>{e.preventDefault();expenses.push({id:nextId++,name:$('#expenseName').value.trim(),amount:Number($('#expenseAmount').value),category:$('#expenseCategory').value,payer:$('#expensePayer').value});$('#expenseName').value='';$('#expenseAmount').value='';$('#expensePayer').value='';renderExpenses();renderBudget()});function renderExpenses(){$('#expenseList').innerHTML=expenses.map(x=>`<div class="list-item"><input type="checkbox" data-expense-paid="${x.id}" ${x.payer?'checked':''} aria-label="Mark paid"><span class="item-text"><b>${esc(x.name)}</b><small>${esc(x.category)} · ${x.payer?'Paid by '+esc(x.payer):'Unpaid'}</small></span><strong>${money(x.amount)}</strong><select data-payer="${x.id}" style="width:125px;padding:8px"><option value="" ${!x.payer?'selected':''}>Unpaid</option>${people.map(p=>`<option ${x.payer===p?'selected':''}>${esc(p)}</option>`).join('')}</select><button class="remove" data-edit-expense="${x.id}">✎</button><button class="remove" data-delete-expense="${x.id}">×</button></div>`).join('')}
+$('#expenseList').addEventListener('click',e=>{const id=Number(e.target.dataset.editExpense||e.target.dataset.deleteExpense);if(!id)return;const x=expenses.find(a=>a.id===id);if(e.target.dataset.editExpense)showModal('Edit expense',`<label class="field">Expense<input id="editExpenseName" value="${esc(x.name)}" required></label><label class="field" style="margin-top:12px">Amount (£)<input id="editExpenseAmount" type="number" min="0" step="0.01" value="${x.amount}" required></label><label class="field" style="margin-top:12px">Category<select id="editExpenseCategory">${['Food & drink','Decorations','Gifts','Party','Other'].map(c=>`<option ${x.category===c?'selected':''}>${c}</option>`).join('')}</select></label>`,()=>{x.name=$('#editExpenseName').value.trim();x.amount=Number($('#editExpenseAmount').value);x.category=$('#editExpenseCategory').value;renderExpenses();renderBudget()});else{expenses=expenses.filter(a=>a.id!==id);renderExpenses();renderBudget()}});
+$$('[data-budget-view]').forEach(b=>b.addEventListener('click',()=>{budgetView=b.dataset.budgetView;$$('[data-budget-view]').forEach(x=>x.classList.toggle('active',x===b));$('#budgetListPanel').classList.toggle('hidden',budgetView!=='list');$('#budgetVisualPanel').classList.toggle('hidden',budgetView!=='visual');renderBudget()}));function renderBudget(){const total=expenses.reduce((a,e)=>a+e.amount,0),paid=expenses.filter(e=>e.payer).reduce((a,e)=>a+e.amount,0),due=total-paid;$('#budgetTotal').textContent=money(total);$('#budgetPaid').textContent=money(paid);$('#budgetDue').textContent=money(due);$('#chartTotal').textContent=money(total);const pct=total?Math.round(paid/total*100):0;$('#paidPercent').textContent=pct+'%';$('#paidProgress').style.width=pct+'%';const cats=['Food & drink','Decorations','Gifts','Party','Other'];const colors=['#d94f35','#e9bd54','#648b68','#b9a1cf','#75a9bd'];const values=cats.map(c=>expenses.filter(e=>e.category===c).reduce((a,e)=>a+e.amount,0));let acc=0;const stops=values.map((v,i)=>{const start=acc;acc+=total?v/total*100:0;return `${colors[i]} ${start}% ${acc}%`}).join(', ');$('#budgetDonut').style.background=total?`conic-gradient(${stops})`:'conic-gradient(#ddd 0 100%)';$('#budgetLegend').innerHTML=cats.map((c,i)=>`<div class="legend-row"><span class="swatch" style="background:${colors[i]}"></span><span style="flex:1">${c}</span><b>${money(values[i])}</b></div>`).join('')}
+$('#decorForm').addEventListener('submit',e=>{e.preventDefault();decorations.push({id:nextId++,text:$('#decorInput').value.trim(),status:$('#decorStatus').value,done:false});$('#decorInput').value='';renderDecorations()});function renderDecorations(){$('#decorList').innerHTML=decorations.map(d=>`<div class="list-item ${d.done?'done':''}"><input type="checkbox" data-decor-check="${d.id}" ${d.done?'checked':''}><span class="item-text">${esc(d.text)}<small>${esc(d.status)}</small></span><button class="remove" data-edit-decor="${d.id}">✎</button><button class="remove" data-delete-decor="${d.id}">×</button></div>`).join('')}
+$('#decorList').addEventListener('click',e=>{const id=Number(e.target.dataset.editDecor||e.target.dataset.deleteDecor);if(!id)return;const d=decorations.find(x=>x.id===id);if(e.target.dataset.editDecor)showModal('Edit decoration',`<label class="field">Decoration<input id="editDecorText" value="${esc(d.text)}" required></label><label class="field" style="margin-top:12px">Status<select id="editDecorStatus">${['Need to buy','Already have','Make it'].map(s=>`<option ${d.status===s?'selected':''}>${s}</option>`).join('')}</select></label>`,()=>{d.text=$('#editDecorText').value;d.status=$('#editDecorStatus').value;renderDecorations()});else{decorations=decorations.filter(x=>x.id!==id);renderDecorations()}});
+$('#cardForm').addEventListener('submit',e=>{e.preventDefault();cards.push({id:nextId++,name:$('#cardName').value.trim(),written:false,sent:false});$('#cardName').value='';renderCards()});function renderCards(){$('#cardList').innerHTML=cards.map(c=>`<div class="list-item"><span style="font-size:20px">✉</span><span class="item-text"><b>${esc(c.name)}</b><small>${c.written?'Written':'Not written'} · ${c.sent?'Sent':'Not sent'}</small></span><label style="display:flex;gap:5px;align-items:center;font-size:12px"><input type="checkbox" data-card-written="${c.id}" ${c.written?'checked':''}> Written</label><label style="display:flex;gap:5px;align-items:center;font-size:12px"><input type="checkbox" data-card-sent="${c.id}" ${c.sent?'checked':''}> Sent</label><button class="remove" data-edit-card="${c.id}">✎</button><button class="remove" data-delete-card="${c.id}">×</button></div>`).join('')}
+$('#cardList').addEventListener('click',e=>{const id=Number(e.target.dataset.editCard||e.target.dataset.deleteCard);if(!id)return;const c=cards.find(x=>x.id===id);if(e.target.dataset.editCard)showModal('Edit card recipient',`<label class="field">Name or household<input id="editCardName" value="${esc(c.name)}" required></label>`,()=>{c.name=$('#editCardName').value.trim();renderCards()});else{cards=cards.filter(x=>x.id!==id);renderCards()}});
+$('#themeBtn').onclick=()=>{const isDark=$('#app').dataset.dark==='true';if(isDark){$('#app').dataset.dark='false';$('#app').style.setProperty('--site-background','#fff8ee');$('#app').style.setProperty('--site-on-background','#302821');$('#app').style.setProperty('--site-primary','#d94f35');$('#app').style.setProperty('--site-on-primary','#ffffff');$('#app').style.setProperty('--site-secondary','#e9bd54');document.body.style.background='#fff8ee';$('#themeBtn').textContent='◐ Appearance'}else{$('#app').dataset.dark='true';$('#app').style.setProperty('--site-background','#24221f');$('#app').style.setProperty('--site-on-background','#f5eee4');$('#app').style.setProperty('--site-primary','#e77b60');$('#app').style.setProperty('--site-on-primary','#241b17');$('#app').style.setProperty('--site-secondary','#8e7d48');document.body.style.background='#191714';$('#themeBtn').textContent='☼ Light mode'};setMoodBackground(moodBackground)};
+function renderEventsDate(){const d=$('#bigDayDate').value;$('#bigDayInline').value=d}renderAll();
+
+// Supabase cloud save: the browser only uses the public anon/publishable key.
+// Row-level security in supabase/schema.sql ensures each account can access only its own data.
+(function initCloudSync(){
+  const statusEl=$('#cloudStatus'), signIn=$('#cloudSignIn'), signUp=$('#cloudSignUp'), signOut=$('#cloudSignOut');
+  const url=window.GATHER_SUPABASE_URL, key=window.GATHER_SUPABASE_ANON_KEY;
+  let client=null, user=null, saveTimer=null, loading=false;
+  function status(message){statusEl.textContent=message;}
+  if(!url||!key||url.includes('YOUR_PROJECT')||key.includes('YOUR_SUPABASE')){
+    status('Demo mode — add your Supabase URL and public anon key to config.js to enable cloud saving.');
+    signIn.disabled=signUp.disabled=true; signIn.title=signUp.title='Configure Supabase first';
+    return;
+  }
+  if(!window.supabase?.createClient){status('Supabase library did not load. Check your connection and refresh.');return;}
+  client=window.supabase.createClient(url,key);
+  const arrays=['todos','recipes','shopping','events','invites','people','expenses','decorations','cards'];
+  function snapshot(){
+    const data={version:1,currentEvent,currentSection,calendarDate:calendarDate.toISOString(),selectedMood,moodBackground,readableBg,budgetView,sideBySide,nextId,promptIndex,arrays:{}};
+    Object.assign(data.arrays,{todos,recipes,shopping,events,invites,people,expenses,decorations,cards});
+    data.partyNotes=$('#partyNotes')?.value||'';
+    return data;
+  }
+  function apply(data){
+    if(!data||data.version!==1)return;
+    loading=true;
+    if(data.currentEvent)currentEvent=data.currentEvent;
+    if(data.currentSection)currentSection=data.currentSection;
+    if(data.calendarDate){const d=new Date(data.calendarDate);if(!Number.isNaN(d.valueOf()))calendarDate=d;}
+    if('selectedMood' in data)selectedMood=data.selectedMood;
+    if('moodBackground' in data)moodBackground=data.moodBackground;
+    if('readableBg' in data)readableBg=data.readableBg;
+    if('budgetView' in data)budgetView=data.budgetView;
+    if('sideBySide' in data)sideBySide=data.sideBySide;
+    if('nextId' in data)nextId=data.nextId;
+    if('promptIndex' in data)promptIndex=data.promptIndex;
+    if(Array.isArray(data.arrays?.todos))todos=data.arrays.todos;
+    if(Array.isArray(data.arrays?.recipes))recipes=data.arrays.recipes;
+    if(Array.isArray(data.arrays?.shopping))shopping=data.arrays.shopping;
+    if(Array.isArray(data.arrays?.events))events=data.arrays.events;
+    if(Array.isArray(data.arrays?.invites))invites=data.arrays.invites;
+    if(Array.isArray(data.arrays?.people))people=data.arrays.people;
+    if(Array.isArray(data.arrays?.expenses))expenses=data.arrays.expenses;
+    if(Array.isArray(data.arrays?.decorations))decorations=data.arrays.decorations;
+    if(Array.isArray(data.arrays?.cards))cards=data.arrays.cards;
+    if($('#partyNotes'))$('#partyNotes').value=data.partyNotes||'';
+    // Restore the selected season into the planner view.
+    $('#eventChooser')?.classList.add('hidden');$('#planner')?.classList.remove('hidden');
+    if($('#sidebarEvent'))$('#sidebarEvent').textContent=currentEvent;
+    if($('#overviewTitle'))$('#overviewTitle').textContent=currentEvent==='Christmas'?'A season to savour.':`Make ${currentEvent.toLowerCase()} your own.`;
+    renderAll();showSection(currentSection||'overview');
+    loading=false;
+  }
+  async function loadCloud(){
+    if(!user)return;
+    status('Loading your saved planner…');loading=true;
+    const {data,error}=await client.from('planner_data').select('data').eq('user_id',user.id).maybeSingle();
+    loading=false;
+    if(error){status('Signed in, but cloud loading failed. Check that you ran supabase/schema.sql.');console.error(error);return;}
+    if(data?.data){apply(data.data);status('Your planner is synced to the cloud.');}
+    else{status('Account ready. Your first changes will be saved to the cloud.');scheduleSave();}
+  }
+  async function saveCloud(){
+    if(!user||loading)return;
+    const payload={user_id:user.id,data:snapshot(),updated_at:new Date().toISOString()};
+    const {error}=await client.from('planner_data').upsert(payload,{onConflict:'user_id'});
+    if(error){status('Cloud save failed. Check your Supabase table and policies.');console.error(error);}
+    else status('All changes saved to your account.');
+  }
+  function scheduleSave(){if(!user||loading)return;clearTimeout(saveTimer);status('Saving…');saveTimer=setTimeout(saveCloud,900);}
+  async function authenticate(mode){
+    const email=$('#cloudEmail').value.trim(),password=$('#cloudPassword').value;
+    if(!email||!password){status('Enter your email and password first.');return;}
+    status(mode==='signup'?'Creating account…':'Signing in…');
+    const result=mode==='signup'?await client.auth.signUp({email,password}):await client.auth.signInWithPassword({email,password});
+    if(result.error){status(result.error.message);return;}
+    if(mode==='signup'&&!result.data.session){status('Account created. Check your email to confirm, then sign in.');return;}
+    status('Signed in. Loading your planner…');
+  }
+  signIn.addEventListener('click',()=>authenticate('signin'));
+  signUp.addEventListener('click',()=>authenticate('signup'));
+  signOut.addEventListener('click',async()=>{await client.auth.signOut();user=null;signOut.hidden=true;signIn.hidden=signUp.hidden=false;status('Signed out. This browser preview remains available, but cloud saving is off.');});
+  // Debounce after handlers mutate app state; no secret key is ever stored in this page.
+  document.addEventListener('click',e=>{if(e.target.closest('#cloudAccount'))return;scheduleSave()});
+  document.addEventListener('change',e=>{if(e.target.closest('#cloudAccount'))return;scheduleSave()});
+  document.addEventListener('submit',e=>{if(e.target.closest('#cloudAccount'))return;scheduleSave()});
+  document.addEventListener('input',e=>{if(e.target.closest('#cloudAccount'))return;if(e.target.id==='partyNotes')scheduleSave()});
+  client.auth.onAuthStateChange((event,session)=>{
+    user=session?.user||null;
+    signIn.hidden=signUp.hidden=!!user;signOut.hidden=!user;
+    $('#cloudEmail').disabled=!!user;$('#cloudPassword').disabled=!!user;
+    if(user){status(`Signed in as ${user.email||'your account'}.`);setTimeout(loadCloud,0);}
+    else if(event==='SIGNED_OUT')status('Signed out. Your planner is not being synced.');
+  });
+  client.auth.getSession().then(({data})=>{if(data.session){user=data.session.user;signIn.hidden=signUp.hidden=true;signOut.hidden=false;$('#cloudEmail').disabled=$('#cloudPassword').disabled=true;loadCloud();}});
+})();
+</script>
+</body>
+</html>
